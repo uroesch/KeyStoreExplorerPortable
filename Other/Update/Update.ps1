@@ -6,8 +6,8 @@
 # -----------------------------------------------------------------------------
 # Globals
 # -----------------------------------------------------------------------------
-$Version        = "0.0.9-alpha"
-$AppRoot        = "$PSScriptRoot\..\.."
+$Version        = "0.0.14-alpha"
+$AppRoot        = $(Convert-Path "$PSScriptRoot\..\..")
 $AppDir         = "$AppRoot\App"
 $AppInfoDir     = "$AppDir\AppInfo"
 $AppInfoIni     = "$AppInfoDir\appinfo.ini"
@@ -44,7 +44,7 @@ Class IniConfig {
     Foreach ($Line in $Content) {
       $This.Log("Processing '$Line'")
       If ($Line[0] -eq ";") {
-        Debug("Skip comment line")
+        $This.Log("Skip comment line")
       }
       ElseIf ($Line[0] -eq "[") {
         $Section = $Line -replace "[\[\]]", ""
@@ -79,7 +79,8 @@ Class Download {
   [string] $ExtractName
   [string] $TargetName
   [string] $Checksum
-  [string] $DownloadDir = "$PSScriptRoot\..\..\Download"
+  [string] $AppRoot     = $(Convert-Path "$PSScriptRoot\..\..")
+  [string] $DownloadDir = $(Fix-Path "$($This.AppRoot)\Download")
 
   Download(
     [string] $u,
@@ -104,24 +105,25 @@ Class Download {
     # placed in the root of the archive. In that case we use the
     # TargetName and and attach it to the script location
     If ($This.ExtractName -eq "") {
-      return "$($This.DownloadDir)\$($This.TargetName)"
+      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
     }
+    Debug info $This.DownloadDir
     return $This.DownloadDir
   }
 
   [string] MoveFrom() {
     If ($This.ExtractName -eq "") {
-      return "$($This.DownloadDir)\$($This.TargetName)"
+      return $(Fix-Path "$($This.DownloadDir)\$($This.TargetName)")
     }
-    return "$($This.DownloadDir)\$($This.ExtractName)"
+    return $(Fix-Path "$($This.DownloadDir)\$($This.ExtractName)")
   }
 
   [string] MoveTo() {
-    return "$PSScriptRoot\..\..\App\$($This.TargetName)"
+    return $(Fix-Path "$($This.AppRoot)\App\$($This.TargetName)")
   }
 
   [string] OutFile() {
-    return "$($This.DownloadDir)\$($This.Basename())"
+    return $(Fix-Path "$($This.DownloadDir)\$($This.Basename())")
   }
 }
 
@@ -129,14 +131,65 @@ Class Download {
 # Functions
 # -----------------------------------------------------------------------------
 Function Debug() {
-  param( [string] $Message )
+  param(
+    [string] $Severity,
+    [string] $Message
+  )
+  $Color = 'White'
+  $Severity = $Severity.ToUpper()
+  Switch ($Severity) {
+    'INFO'  { $Color = 'Green';      break }
+    'WARN'  { $Color = 'Yellow';     break }
+    'ERROR' { $Color = 'DarkYellow'; break }
+    'FATAL' { $Color = 'Red';        break }
+    default { $Color = 'White';      break }
+  }
   If (-Not($Debug)) { return }
-  Write-Host $Message
+  Write-Host "$(Get-Date -Format u) - " -NoNewline
+  Write-Host $Severity": " -NoNewline -ForegroundColor $Color
+  Write-Host $Message.Replace($(Fix-Path "$AppRoot\"), '')
 }
 
 # -----------------------------------------------------------------------------
 Function Is-Unix() {
   ($PSScriptRoot)[0] -eq '/'
+}
+
+# -----------------------------------------------------------------------------
+Function Which-7Zip() {
+  $Locations = @(
+    "$Env:ProgramFiles\7-Zip",
+    "$Env:ProgramFiles(x86)\7-Zip",
+    "$AppRoot\..\7-ZipPortable\App\7-Zip"
+  )
+  Switch (Is-Unix) {
+    $True {
+      $Prefix = 'wine'
+      $Binary = '7z'
+      break
+    }
+    default {
+      $Prefix = ''
+      $Binary = '7z.exe'
+    }
+  }
+  Try {
+    $Path = $(Get-Command $Binary).Source.ToString()
+  }
+  Catch {
+    Foreach ($Location in $Locations) {
+      If (Test-Path "$Location\$Binary") {
+        $Path = "$Prefix $Location\$Binary"
+      }
+    }
+  }
+  Finally {
+    If (!($Path)) {
+      Debug fatal "Could not locate $Binary"
+      Exit 76
+    }
+  }
+  return $Path
 }
 
 # -----------------------------------------------------------------------------
@@ -146,8 +199,8 @@ Function Check-Sum {
   )
   ($Algorithm, $Sum) = $Download.Checksum.Split(':')
   $Result = (Get-FileHash -Path $Download.OutFile() -Algorithm $Algorithm).Hash
-  Debug "Checksum of INI ($Sum) and downloaded file ($Result)"
-  return ($Sum -eq $Result)
+  Debug info "Checksum of INI ($($Sum.ToUpper())) and download ($Result)"
+  return ($Sum.ToUpper() -eq $Result)
 }
 
 # -----------------------------------------------------------------------------
@@ -155,24 +208,26 @@ Function Download-File {
   param(
     [object] $Download
   )
-  If (!(Test-Path $Download.DownloadDir)) { 
-    Debug "Creating directory $($Download.DownloadDir)"G 
+  # hide progress bar
+  $Global:ProgressPreference = 'silentlyContinue'
+  If (!(Test-Path $Download.DownloadDir)) {
+    Debug info "Create directory $($Download.DownloadDir)"
     New-Item -Path $Download.DownloadDir -Type directory | Out-Null
   }
   If (!(Test-Path $Download.OutFile())) {
-    Debug "Download URL $($Download.URL) to $($Download.OutFile()).part"
+    Debug info "Download URL $($Download.URL) to $($Download.OutFile()).part"
     Invoke-WebRequest -Uri $Download.URL `
       -OutFile "$($Download.OutFile()).part"
 
-    Debug "Moving file '$($Download.OutFile).part to $($Download.OutFile())"
+    Debug info "Move file $($Download.OutFile).part to $($Download.OutFile())"
     Move-Item -Path "$($Download.OutFile()).part" `
       -Destination $Download.OutFile()
   }
   If (!(Check-Sum -Download $Download)) {
-    Debug "Checksum of File $($Download.OutFile()) not match with '$Checksum'"
+    Debug fatal "Checksum for $($Download.OutFile()) does not match '$Checksum'"
     Exit 1
   }
-  Debug "Downloaded file '$($Download.OutFile())'"
+  Debug info "Downloaded file '$($Download.OutFile())'"
 }
 
 # -----------------------------------------------------------------------------
@@ -181,12 +236,30 @@ Function Expand-Download {
     [object] $Download
   )
   If (!(Test-Path $Download.ExtractTo())) {
-    Debug "Creating extract directory $($Download.ExtractTo())"
+    Debug info "Create extract directory $($Download.ExtractTo())"
     New-Item -Path $Download.ExtractTo() -Type "directory" | Out-Null
   }
-  Debug "Extract $($Download.OutFile()) to $($Download.ExtractTo())"
+  Debug info "Extract $($Download.OutFile()) to $($Download.ExtractTo())"
   Expand-Archive -LiteralPath $Download.OutFile() `
     -DestinationPath $Download.ExtractTo() -Force
+}
+
+# -----------------------------------------------------------------------------
+Function Expand-7Zip {
+  param(
+    [object] $Download
+  )
+  $7ZipExe = $(Which-7Zip)
+  If (!(Test-Path $Download.ExtractTo())) {
+    Debug info "Create extract directory $($Download.ExtractTo())"
+    New-Item -Path $Download.ExtractTo() -Type "directory" | Out-Null
+  }
+  Debug info "Extract $($Download.OutFile()) to $($Download.ExtractTo())"
+  $Command = "$7ZipExe x -r -y  " +
+    " -o""$($Download.ExtractTo())"" " +
+    " ""$($Download.OutFile())"""
+  Debug info "Running command '$Command'"
+  Invoke-Expression $Command | Out-Null
 }
 
 # -----------------------------------------------------------------------------
@@ -199,14 +272,19 @@ Function Update-Release {
       Expand-Download -Download $Download
       break
     }
+    '\.7[Zz]\.[Ee][Xx][Ee]$' {
+      Expand-7Zip -Download $Download
+      break
+    }
   }
   If (Test-Path $Download.MoveTo()) {
-    Debug "Cleanup $($Download.MoveTo())"
+    Debug info "Cleanup $($Download.MoveTo())"
     Remove-Item -Path $Download.MoveTo() `
       -Force `
       -Recurse
   }
-  Debug "Move release from $($Download.MoveFrom()) to $($Download.MoveTo())"
+  Debug info `
+    "Move release from $($Download.MoveFrom()) to $($Download.MoveTo())"
   Move-Item -Path $Download.MoveFrom() `
     -Destination $Download.MoveTo() `
     -Force
@@ -219,8 +297,9 @@ Function Update-Appinfo-Item() {
     [string] $Match,
     [string] $Replace
   )
+  $IniFile = $(Fix-Path $IniFile)
   If (Test-Path $IniFile) {
-    Debug "Updating INI File $IniFile with $Match -> $Replace"
+    Debug info "Update INI File $IniFile with $Match -> $Replace"
     $Content = (Get-Content $IniFile)
     $Content -replace $Match, $Replace | `
       Out-File -Encoding UTF8 -FilePath $IniFile
@@ -267,12 +346,32 @@ Function Postinstall() {
     . $Postinstall
   }
 }
+
+# -----------------------------------------------------------------------------
+Function Fix-Path() {
+  # Convert Path only Works on Existing Directories :(
+  param( [string] $Path )
+  Switch (Is-Unix) {
+    $True { 
+      $From = '\'
+      $To   = '/'
+      break;
+    }
+    default {
+      $From = '/'
+      $To   = '\'
+    }
+  }
+  $Path = $Path.Replace($From, $To)
+  return $Path
+}
+
 # -----------------------------------------------------------------------------
 Function Windows-Path() {
   param( [string] $Path )
-  $Path = $Path -replace ".*drive_(.)", '$1:' 
-  $Path = $Path.Replace("/", "\")
-  return $Path
+  If (!(Is-Unix)) { return $Path }
+  $WinPath = $(Invoke-Expression "winepath --windows $Path")
+  return $WinPath
 }
 
 # -----------------------------------------------------------------------------
@@ -284,7 +383,7 @@ Function Create-Launcher() {
       "..\PortableApps.comLauncher\PortableApps.comLauncherGenerator.exe"
   }
   Catch {
-    "FATAL: Unable to create PortableApps Launcher"
+    Debug fatal "Unable to create PortableApps Launcher"
     Exit 21
   }
 }
@@ -292,11 +391,12 @@ Function Create-Launcher() {
 # -----------------------------------------------------------------------------
 Function Create-Installer() {
   Try {
-    Invoke-Helper -Sleep 5 -Command `
+    Invoke-Helper -Sleep 5 -Timeout 300 -Command `
       "..\PortableApps.comInstaller\PortableApps.comInstaller.exe"
   }
   Catch {
-    "FATAL: Unable to create installer for PortableApps"
+    Debug fatal "Unable to create installer for PortableApps"
+    Debug fatal $_
     Exit 42
   }
 }
@@ -305,26 +405,26 @@ Function Create-Installer() {
 Function Invoke-Helper() {
   param(
     [string] $Command,
-    [int]    $Sleep = $Null
+    [int]    $Sleep   = $Null,
+    [int]    $Timeout = 30
   )
-
   Set-Location $AppRoot
-  $AppPath   = (Get-Location)
+  $AppPath = (Get-Location)
 
-  If (Is-Unix) {
-    Debug "Running PA Command: wine $Command $(Windows-Path $AppPath)"
-    Invoke-Expression "wine $Command $(Windows-Path $AppPath)"
+  Switch (Is-Unix) {
+    $True   { $Prefix = "timeout $Timeout wine"; break }
+    default { $Prefix = '' }
   }
-  Else {
-    # Windows seems to need a bit of break before
-    # writing the file completely to disk
-    Write-FileSystemCache $AppPath.Drive.Name
-    If ($Sleep) {
-      Debug "Waiting for filsystem cache to catch up"
-      Sleep $Sleep
-    }
-    Debug "Running PA Command: $Command AppPath"
-    Invoke-Expression "$Command $AppPath"
+
+  If ($Sleep) {
+    Debug info "Waiting for filsystem cache to catch up"
+    Start-Sleep $Sleep
+  }
+
+  Debug info "Run PA Command $Prefix $Command $(Windows-Path $AppPath)"
+  Invoke-Expression "$Prefix $Command $(Windows-Path $AppPath)"
+  If (!(Is-Unix)) { 
+    Wait-Process -Name $(Get-Item $Command).Basename -Timeout $Timeout
   }
 }
 
