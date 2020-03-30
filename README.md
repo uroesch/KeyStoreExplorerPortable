@@ -1,7 +1,7 @@
 [![Build](https://github.com/uroesch/KeyStoreExplorerPortable/workflows/build-package/badge.svg)](https://github.com/uroesch/KeyStoreExplorerPortable/actions?query=workflow%3Abuild-package)
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/uroesch/KeyStoreExplorerPortable?include_prereleases)](https://github.com/uroesch/KeyStoreExplorerPortable/releases)
 [![Runs on](https://img.shields.io/badge/runs%20on-Win64%20%26%20Win32-blue)](#runtime-dependencies)
-[![Depends on](https://img.shields.io/badge/runs%20on-Java-blue)](#runtime-dependencies)
+[![Depends on](https://img.shields.io/badge/depends%20on-Java-blue)](#runtime-dependencies)
 
 # KeyStore Explorer Portable for PortableApps.com
 
