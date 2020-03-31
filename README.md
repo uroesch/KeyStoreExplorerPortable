@@ -19,8 +19,6 @@ Windows, macOS and Linux.
 ## Runtime dependencies
 * 32-bit or 64-bit version of Windows.
 * 32-bit version of Java e.g.
-  [OpenJDK JRE](https://portableapps.com/apps/utilities/OpenJDKJRE),
-  [OpenJDK](https://portableapps.com/apps/utilities/OpenJDK),
   [JRE](https://portableapps.com/apps/utilities/java_portable) or
   [JDK](https://portableapps.com/apps/utilities/jdkportable) 
   
@@ -30,6 +28,7 @@ This PortableApp project is in early beta stage.
 
 ## Todo
 - [ ] Documentation
+- [ ] Make work with OpenJDK Portable
 - [x] Icons
 - [x] Download script for updating
 
