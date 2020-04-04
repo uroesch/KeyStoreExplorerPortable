@@ -352,7 +352,7 @@ Function Fix-Path() {
   # Convert Path only Works on Existing Directories :(
   param( [string] $Path )
   Switch (Is-Unix) {
-    $True { 
+    $True {
       $From = '\'
       $To   = '/'
       break;
@@ -412,12 +412,12 @@ Function Invoke-Helper() {
   $AppPath = (Get-Location)
 
   Switch (Is-Unix) {
-    $True   { 
+    $True   {
       $Arguments = "$Command $(Windows-Path $AppPath)"
-      $Command   = "wine" 
-      break 
+      $Command   = "wine"
+      break
     }
-    default { 
+    default {
       $Arguments = Windows-Path $AppPath
     }
   }
