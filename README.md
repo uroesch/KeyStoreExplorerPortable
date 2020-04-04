@@ -28,7 +28,7 @@ This PortableApp project is in early beta stage.
 
 ## Todo
 - [ ] Documentation
-- [ ] Make work with OpenJDK Portable
+- [x] Make work with OpenJDK Portable
 - [x] Icons
 - [x] Download script for updating
 
