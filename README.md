@@ -28,7 +28,7 @@ Windows, macOS and Linux.
 |-----------------|:------------------:|:-------------------:|
 | Windows XP      | ![nd][nd]          | ![nd][nd]           | 
 | Windows Vista   | ![ps][ps]          | ![ps][ps]           | 
-| Windows 7       | ![ps][ps]          | ![ps][ps]           |  
+| Windows 7       | ![fs][fs]          | ![ps][ps]           |  
 | Windows 8       | ![ps][ps]          | ![ps][ps]           |  
 | Windows 10      | ![fs][fs]          | ![fs][fs]           |
 
