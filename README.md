@@ -26,8 +26,8 @@ Windows, macOS and Linux.
 
 | OS              | 32-bit             | 64-bit              | 
 |-----------------|:------------------:|:-------------------:|
-| ReactOS 0.4.14  | ![nd][nd]          | ![nd][nd]           |
-| ReactOS 0.4.15  | ![nd][nd]          | ![nd][nd]           |
+| ReactOS 0.4.14  | ![ns][ns]          | ![na][na]           |
+| ReactOS 0.4.15  | ![ns][ns]          | ![ns][ns]           |
 | Windows XP      | ![nd][nd]          | ![nd][nd]           | 
 | Windows Vista   | ![ps][ps]          | ![ps][ps]           | 
 | Windows 7       | ![fs][fs]          | ![ps][ps]           |  
