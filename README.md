@@ -8,39 +8,39 @@
 
 <img src="App/AppInfo/appicon_128.png" align=left>
 
-[KeyStore Explorer](https://keystore-explorer.org/) is an open source GUI 
-replacement for the Java command-line utilities keytool and jarsigner. 
-KeyStore Explorer presents their functionality, and more, via an intuitive 
+[KeyStore Explorer](https://keystore-explorer.org/) is an open source GUI
+replacement for the Java command-line utilities keytool and jarsigner.
+KeyStore Explorer presents their functionality, and more, via an intuitive
 graphical user interface.
 
-KeyStore Explorer is written in Java and will run on any machine that 
-has an Oracle JRE installed. Its capabilities are therefore available on 
+KeyStore Explorer is written in Java and will run on any machine that
+has an Oracle JRE installed. Its capabilities are therefore available on
 Windows, macOS and Linux.
 
 ## Runtime dependencies
 * 32-bit or 64-bit version of Windows.
 * 32-bit version of Java e.g.
   [JRE](https://portableapps.com/apps/utilities/java_portable) or
-  [JDK](https://portableapps.com/apps/utilities/jdkportable) 
+  [JDK](https://portableapps.com/apps/utilities/jdkportable)
 
 ## Support matrix
 
-| OS              | 32-bit             | 64-bit              | 
+| OS              | 32-bit             | 64-bit              |
 |-----------------|:------------------:|:-------------------:|
 | ReactOS 0.4.14  | ![ns][ns]          | ![na][na]           |
 | ReactOS 0.4.15  | ![ns][ns]          | ![ns][ns]           |
-| Windows XP      | ![nd][nd]          | ![nd][nd]           | 
-| Windows Vista   | ![ps][ps]          | ![ps][ps]           | 
-| Windows 7       | ![fs][fs]          | ![ps][ps]           |  
-| Windows 8       | ![ps][ps]          | ![ps][ps]           |  
+| Windows XP      | ![nd][nd]          | ![nd][nd]           |
+| Windows Vista   | ![ps][ps]          | ![ps][ps]           |
+| Windows 7       | ![fs][fs]          | ![ps][ps]           |
+| Windows 8       | ![ps][ps]          | ![ps][ps]           |
 | Windows 10      | ![fs][fs]          | ![fs][fs]           |
 | Windows 11      | ![na][na]          | ![fs][fs]           |
 
 Legend: ![ns][ns] not supported; ![na][na] not applicable; ![nd][nd] no data; ![ps][ps] supported but not verified; ![fs][fs] verified;
-  
 
-## Status 
-This PortableApp project is in early beta stage. 
+
+## Status
+This PortableApp project is in early beta stage.
 
 ## Todo
 - [ ] Documentation
